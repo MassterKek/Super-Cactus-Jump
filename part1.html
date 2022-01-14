@@ -43,8 +43,6 @@
         this.load.image('ground', 'assets/platform.png');
         this.load.image('star', 'assets/star.png');
         //this.load.image('bomb', 'assets/bomb.png');
-        this.load.spritesheet('dude', 'assets/dude.png',
-                                {   frameWidth: 32, frameHeight: 48});
         this.load.spritesheet('alien', 'assets/alien.png',
                                 {   frameWidth: 64, frameHeight: 64});
     }
@@ -59,11 +57,9 @@
         //platforms.create(600, 400, 'ground');
         //platforms.create(150, 350, 'ground');
         //platforms.create(750, 220, 'ground');
-
         player = this.physics.add.sprite(100, 450, 'alien');
         // player.setScale(.5);
 
-        player.setBounce(0.2);
         player.setCollideWorldBounds(true);
 
         this.anims.create({
@@ -116,9 +112,9 @@
 
         scoreText = this.add.text(16, 16, 'Score: 0', {fontSize: '32px', fill: '#000' });
 
-        //bombs = this.physics.add.group();
-        //this.physics.add.collider(bombs, platforms);
-        //this.physics.add.collider(player, bombs, hitBomb, null, this);
+        bombs = this.physics.add.group();
+        this.physics.add.collider(bombs, platforms);
+        this.physics.add.collider(player, bombs, hitBomb, null, this);
 
         cursors = this.input.keyboard.createCursorKeys();
 
@@ -131,48 +127,17 @@
     {
         // if grounded
         if(player.body.touching.down){
-            if(cursors.left.isDown){
-                if (player.scaleX > 0){ player.scaleX *= -1;}
-                player.setVelocityX(-160);
-                player.anims.play('run', true);
-            }
-            else if(cursors.right.isDown){
-                if (player.scaleX < 0){ player.scaleX *= -1;}
-                player.setVelocityX(160);
-                player.anims.play('run', true);
-            }
-            else{
-                player.setVelocityX(0);
-                player.anims.play('turn');
-            }
+            player.anims.play('run', true);
         }
         else{
             // if jumping
             if(player.body.velocity.y < 0){
-                if(cursors.left.isDown){
-                    if (player.scaleX > 0){ player.scaleX *= -1;}
-                    player.setVelocityX(-160);
-                    player.anims.play('jump', true);
-                }
-                else if(cursors.right.isDown){
-                    if (player.scaleX < 0){ player.scaleX *= -1;}
-                    player.setVelocityX(160);
-                    player.anims.play('jump', true);
-                }
+                player.anims.play('jump', true);
 
             }
             // if falling
             else{
-                if(cursors.left.isDown){
-                    if (player.scaleX > 0){ player.scaleX *= -1;}
-                    player.setVelocityX(-160);
-                    player.anims.play('fall', true);
-                }
-                else if(cursors.right.isDown){
-                    if (player.scaleX < 0){ player.scaleX *= -1;}
-                    player.setVelocityX(160);
-                    player.anims.play('fall', true);
-                }
+                player.anims.play('fall', true);
             }
 
         }
@@ -189,30 +154,28 @@
     //     score += 10;
     //     scoreText.setText('Score: ' + score)
 
-    //     //dropBombs();
+    //     dropBombs();
 
     // }
 
-    // function hitBomb (player, bomb){
-    //     this.physics.pause();
-    //     player.setTint(0xff0000);
-    //     player.anims.play('turn');
-    //     gameOver = true;
-    // }
+    function hitBomb (player, bomb){
+        this.physics.pause();
+        player.setTint(0xff0000);
+        player.anims.play('turn');
+        gameOver = true;
+    }
 
-    // function dropBombs(){
-    //     if(stars.countActive(true) == 0){
-    //         stars.children.iterate(function (child){
-    //             child.enableBody(true, child.x, 0, true, true);
-    //         });
-    //         var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+    function dropBombs(){
+        if(stars.countActive(true) == 0){
+            stars.children.iterate(function (child){
+                child.enableBody(true, child.x, 0, true, true);
+            });
+            var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
 
-    //         var bomb = bombs.create(x, 16, 'bomb');
-    //         bomb.setBounce(1);
-    //         bomb.setCollideWorldBounds(true);
-    //         bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-    //     }
-    // }
+            var bomb = bombs.create(x, 16, 'bomb');
+            bomb.setVelocity(160,0);
+        }
+    }
 
 </script>
 
