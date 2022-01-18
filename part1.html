@@ -21,7 +21,7 @@
         physics: {
             default: 'arcade',
             arcade: {
-                gravity: {y: 900},
+                gravity: {y: 600},
                 debug: false
             }
         },
@@ -55,7 +55,7 @@
 
         platforms.create(400, 568, 'ground').setScale(2).refreshBody();
         //platforms.create(600, 400, 'ground');
-        //platforms.create(150, 350, 'ground');
+        platforms.create(150, 350, 'ground');
         //platforms.create(750, 220, 'ground');
         player = this.physics.add.sprite(100, 450, 'alien');
         // player.setScale(.5);
