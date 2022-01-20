@@ -34,14 +34,17 @@
 
     var score = 0;
     var scoreText;
+    var gameOver = false;
 
     var game = new Phaser.Game(config);
+    var isJumping = false;
 
     function preload ()
     {
         this.load.image('sky', 'assets/sky.png');
         this.load.image('ground', 'assets/platform.png');
-        this.load.image('star', 'assets/star.png');
+        this.load.spritesheet('tallObs', 'assets/tallObs.png',
+                                {   frameWidth: 64, frameHeight: 128});
         //this.load.image('bomb', 'assets/bomb.png');
         this.load.spritesheet('alien', 'assets/alien.png',
                                 {   frameWidth: 64, frameHeight: 64});
@@ -53,21 +56,32 @@
 
         platforms = this.physics.add.staticGroup();
 
-        platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-        //platforms.create(600, 400, 'ground');
-        platforms.create(150, 350, 'ground');
-        //platforms.create(750, 220, 'ground');
+        platforms.create(400, 568, 'ground').setScale(2).refreshBody(); 
         player = this.physics.add.sprite(100, 450, 'alien');
-        // player.setScale(.5);
 
         player.setCollideWorldBounds(true);
 
+        // this.anims.create({
+        //     key: 'run',
+        //     frames: this.anims.generateFrameNumbers('alien', { start: 4, end: 9 }),
+        //     frameRate: 10,
+        //     repeat: -1
+        // });
+
         this.anims.create({
             key: 'run',
-            frames: this.anims.generateFrameNumbers('alien', { start: 4, end: 9 }),
+            frames: [
+                { key: 'alien', frame: 4 },
+                { key: 'alien', frame: 5 },
+                { key: 'alien', frame: 6 },
+                { key: 'alien', frame: 7 },
+                { key: 'alien', frame: 8 },
+                { key: 'alien', frame: 6 }
+            ],
             frameRate: 10,
             repeat: -1
         });
+
 
         this.anims.create({
             key: 'turn',
@@ -75,16 +89,18 @@
             frameRate: 20
         });
 
-        this.anims.create({
-            key: 'crouch',
+        this.anims.create({ 
+            key: 'prejump',
             frames: [{ key: 'alien', frame: 1 }],
-            frameRate: 10
+            frameRate: 10,
+            repeat: 1
         });
 
-        this.anims.create({
+        this.anims.create({ 
             key: 'jump',
             frames: [{ key: 'alien', frame: 2 }],
-            frameRate: 10
+            frameRate: 10,
+            repeat: -1
         });
 
         this.anims.create({
@@ -93,22 +109,16 @@
             frameRate: 10
         });
 
-        // this.anims.create({
-        //     key: 'right',
-        //     frames: this.anims.generateFrameNumbers('dude', { start: 4, end: 9 }),
-        //     frameRate: 10,
-        //     repeat: -1
-        // });
+        tallObs = this.physics.add.group({
+            key: 'tallObs',
+            repeat: 0,
+            setXY: { x: 900 , y: 400, stepX: 70 }
+        });
 
-        // stars = this.physics.add.group({
-        //     key: 'star',
-        //     repeat: 11,
-        //     setXY: { x: 12, y: 0, stepX: 70 }
-        // });
-
-        // stars.children.iterate(function (child){
-        //     child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-        // });
+        tallObs.children.iterate(function (child){
+            child.setCollideWorldBounds(false);
+            child.setVelocityX(-200);
+        });
 
         scoreText = this.add.text(16, 16, 'Score: 0', {fontSize: '32px', fill: '#000' });
 
@@ -119,50 +129,71 @@
         cursors = this.input.keyboard.createCursorKeys();
 
         this.physics.add.collider(player, platforms);
-        //this.physics.add.collider(stars, platforms);
-        //this.physics.add.overlap(player, stars, collectStar, null, this);
+        this.physics.add.collider(tallObs, platforms);
+        this.physics.add.overlap(player, tallObs, hitOb, null, this);
+
     }
 
     function update ()
     {
-        // if grounded
-        if(player.body.touching.down){
-            player.anims.play('run', true);
+        
+
+        if (gameOver){
+            scoreText.setText('Score: ' + score + ' - Fin');
+            return;
         }
         else{
+            score++;
+            scoreText.setText('Score: ' + score)
+            // if grounded
+            if(player.body.touching.down){
+                player.anims.play('run', true);
+
+                if(cursors.space.isDown){
+                player.anims.play('prejump');
+                jump();
+                }
+            }
             // if jumping
-            if(player.body.velocity.y < 0){
-                player.anims.play('jump', true);
-
-            }
-            // if falling
             else{
-                player.anims.play('fall', true);
-            }
+                if(player.body.velocity.y > 0){
+                    player.anims.play('fall', true);
+                } 
+                
 
-        }
-        if(cursors.space.isDown && player.body.touching.down){
-            player.anims.play('crouch');
-            player.setVelocityY(-450);
+            }
+            if(cursors.up.isDown){
+                console.log(player.body.position.x);
+                console.log(player.body.origin);
+            }
+            if(cursors.left.isDown){
+                player.flipX = true;
+            }
+            else if(cursors.right.isDown){
+                player.flipX = false;
+            }
         }
         
     }
 
-    // function collectStar(player, star){
-    //     star.disableBody(true, true);
+    function hitOb(player, obs){
+        //obs.disableBody(true, true);
+        
+        gameOver = true;
+        //dropBombs();
 
-    //     score += 10;
-    //     scoreText.setText('Score: ' + score)
-
-    //     dropBombs();
-
-    // }
+    }
 
     function hitBomb (player, bomb){
         this.physics.pause();
         player.setTint(0xff0000);
         player.anims.play('turn');
         gameOver = true;
+    }
+
+    function jump (){
+            player.setVelocityY(-450);
+            player.anims.play('jump');
     }
 
     function dropBombs(){
